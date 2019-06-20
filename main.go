@@ -117,23 +117,28 @@ func StartWithOptions(opts *MemongoOptions) (*MemongoServer, error) {
 		}
 	}
 
+	// Create a db dir. Even the ephemeralForTest engine needs a dbpath.
 	dbDir, err := ioutil.TempDir("", "")
 	if err != nil {
 		return nil, err
 	}
 
+	// Construct the command and attach stdout/stderr handlers
 	cmd := exec.Command(binPath, "--storageEngine", "ephemeralForTest", "--dbpath", dbDir, "--port", "0")
 
 	stdoutHandler, startupErrCh, startupPortCh := stdoutHandler(logger)
 	cmd.Stdout = stdoutHandler
 	cmd.Stderr = stderrHandler(logger)
 
+	// Run the server
 	err = cmd.Start()
 	if err != nil {
 		os.RemoveAll(dbDir)
 		return nil, err
 	}
 
+	// Start a watcher: the watcher is a subprocess that ensure if this process
+	// dies, the mongo server will be killed (and not reparented under init)
 	watcherCmd, err := monitor.RunMonitor(os.Getpid(), cmd.Process.Pid)
 	if err != nil {
 		_ = cmd.Process.Kill()
@@ -141,6 +146,8 @@ func StartWithOptions(opts *MemongoOptions) (*MemongoServer, error) {
 		return nil, err
 	}
 
+	// Wait for the stdout handler to report the server's port number (or a
+	// startup error)
 	var port int
 	select {
 	case p := <-startupPortCh:
@@ -155,6 +162,7 @@ func StartWithOptions(opts *MemongoOptions) (*MemongoServer, error) {
 		return nil, errors.New("timed out waiting for mongod to start")
 	}
 
+	// Return a Memongo server
 	return &MemongoServer{
 		cmd:        cmd,
 		watcherCmd: watcherCmd,
@@ -164,14 +172,17 @@ func StartWithOptions(opts *MemongoOptions) (*MemongoServer, error) {
 	}, nil
 }
 
+// Port returns the port the server is listening on.
 func (s *MemongoServer) Port() int {
 	return s.port
 }
 
+// URI returns a mongodb:// URI to connect to
 func (s *MemongoServer) URI() string {
 	return "mongodb://localhost:" + strconv.Itoa(s.port)
 }
 
+// Stop kills the mongo server
 func (s *MemongoServer) Stop() {
 	err := s.cmd.Process.Kill()
 	if err != nil {
@@ -200,6 +211,14 @@ var rePermissionDenied = regexp.MustCompile("mongod permission denied")
 var reDataDirectoryNotFound = regexp.MustCompile("data directory .*? not found")
 var reShuttingDown = regexp.MustCompile("shutting down with code")
 
+// The stdout handler relays lines from mongod's stout to our logger, and also
+// watches during startup for error or success messages.
+//
+// It returns two channels: an error channel and a port channel. Only one
+// message will be sent to one of these two channels. A port number will
+// be sent to the port channel if the server start up correctly, and an
+// error will be send to the error channel if the server does not start up
+// correctly.
 func stdoutHandler(log *logger) (io.Writer, <-chan error, <-chan int) {
 	errChan := make(chan error)
 	portChan := make(chan int)
@@ -248,11 +267,16 @@ func stdoutHandler(log *logger) (io.Writer, <-chan error, <-chan int) {
 		if err := scanner.Err(); err != nil {
 			log.Warnf("reading mongod stdin failed: %s", err)
 		}
+
+		if !haveSentMessage {
+			errChan <- errors.New("Mongod exited before startup completed")
+		}
 	}()
 
 	return writer, errChan, portChan
 }
 
+// The stderr handler just relays messages from stderr to our logger
 func stderrHandler(log *logger) io.Writer {
 	reader, writer := io.Pipe()
 
