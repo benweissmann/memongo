@@ -1,5 +1,7 @@
 # memongo
 
+[![GoDoc](https://godoc.org/github.com/benweissmann/memongo?status.svg)](https://godoc.org/github.com/benweissmann/memongo)
+
 memongo is a Go package that spins up a real MongoDB server, backed by in-memory
 storage, for use in testing and mocking during development. It's based on
 [mongodb-memory-server](https://github.com/nodkz/mongodb-memory-server) for
@@ -17,7 +19,7 @@ Currently, memongo only supports UNIX systems. CI will run on MacOS, Ubuntu Xeni
 
 Spin up a server for a single test:
 
-```
+```go
 func TestSomething(t *testing.T) {
   mongoServer, err := memongo.Start("4.0.5")
   if (err != nil) {
@@ -31,7 +33,7 @@ func TestSomething(t *testing.T) {
 
 Spin up a server, shared between tests:
 
-```
+```go
 var mongoServer memongo.Server;
 
 func TestMain(m *testing.M) {
@@ -41,7 +43,7 @@ func TestMain(m *testing.M) {
   }
   defer mongoServer.Stop()
 
-	os.Exit(m.Run())
+  os.Exit(m.Run())
 }
 
 func TestSomething(t *testing.T) {
@@ -53,7 +55,7 @@ func TestSomething(t *testing.T) {
 
 The behavior of memongo can be controlled by using
 `memongo.StartWithOptions` instead of `memongo.Start`. See
-[the godoc](TODO) for all the options. Many options can also be set via environment variable.
+[the godoc](https://godoc.org/github.com/benweissmann/memongo) for all the options. Many options can also be set via environment variable.
 
 A few common use-cases are covered here:
 
