@@ -1,0 +1,45 @@
+linters-settings:
+  gocyclo:
+    min-complexity: 20
+  depguard:
+    list-type: blacklist
+    include-go-root: true
+    packages:
+      - math/rand
+
+linters:
+  enable:
+    - deadcode
+    - errcheck
+    - gas
+    - gocyclo
+    - gofmt
+    - goimports
+    - golint
+    - ineffassign
+    - maligned
+    - misspell
+    - unconvert
+    - varcheck
+    - govet
+    - staticcheck
+    - unused
+    - gosimple
+    - gosec
+    - depguard
+  enable-all: false
+
+issues:
+  # Gometalinter ignores too many things by default; we add back just a few
+  # exceptions
+  exclude-use-default: false
+  exclude:
+    - Error return value of .(.*Close|.*Flush|os\.Remove(All)?|os\.(Un)?Setenv). is not checked
+
+  exclude-rules:
+    - path: _test\.go|acceptance/
+      linters:
+        - gocyclo
+        - errcheck
+        - gosec
+        - maligned

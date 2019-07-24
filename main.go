@@ -6,115 +6,45 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
-	"os/user"
-	"path"
 	"regexp"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/benweissmann/memongo/mongobin"
+	"github.com/benweissmann/memongo/memongolog"
 	"github.com/benweissmann/memongo/monitor"
 )
 
-type MemongoOptions struct {
-	// Path to the cache for downloaded mongod binaries. Defaults to the
-	// system cache location.
-	CachePath string
-
-	// If DownloadURL and MongodBin are not given, this version of MongoDB will
-	// be downloaded
-	MongoVersion string
-
-	// If given, mongod will be downloaded from this URL instead of the
-	// auto-detected URL based on the current platform and MongoVersion
-	DownloadURL string
-
-	// If given, this binary will be run instead of downloading a mongod binary
-	MongodBin string
-
-	// Logger for printing messages. Defaults to printing to stdout.
-	Logger *log.Logger
-
-	// A LogLevel to log at. Defaults to LogLevelInfo.
-	LogLevel LogLevel
-}
-
-type MemongoServer struct {
+// Server represents a running MongoDB server
+type Server struct {
 	cmd        *exec.Cmd
 	watcherCmd *exec.Cmd
 	dbDir      string
-	logger     *logger
+	logger     *memongolog.Logger
 	port       int
 }
 
-func Start(version string) (*MemongoServer, error) {
-	return StartWithOptions(&MemongoOptions{
+// Start runs a MongoDB server at a given MongoDB version using default options
+// and returns the Server.
+func Start(version string) (*Server, error) {
+	return StartWithOptions(&Options{
 		MongoVersion: version,
 	})
 }
 
-func StartWithOptions(opts *MemongoOptions) (*MemongoServer, error) {
-	// Get a logger
-	logger := newLogger(opts.Logger, opts.LogLevel)
-
-	// Download if needed
-	binPath := opts.MongodBin
-	if binPath == "" {
-		binPath = os.Getenv("MEMONGO_MONGOD_BIN")
+// StartWithOptions is like Start(), but accepts options.
+func StartWithOptions(opts *Options) (*Server, error) {
+	err := opts.fillDefaults()
+	if err != nil {
+		return nil, err
 	}
-	if binPath == "" {
-		// Determine the cache path
-		cachePath := opts.CachePath
-		if cachePath == "" {
-			cachePath = os.Getenv("MEMONGO_CACHE_PATH")
-		}
-		if cachePath == "" && os.Getenv("XDG_CACHE_HOME") != "" {
-			cachePath = path.Join(os.Getenv("XDG_CACHE_HOME"), "/memongo")
-		}
-		if cachePath == "" {
-			user, err := user.Current()
-			if err != nil {
-				return nil, fmt.Errorf("unable to get current user: %s", err)
-			}
 
-			if runtime.GOOS == "darwin" {
-				cachePath = path.Join(user.HomeDir, "Library", "Caches", "memongo")
-			} else {
-				cachePath = path.Join(user.HomeDir, ".cache", "memongo")
-			}
-		}
-
-		// Determine the download URL
-		downloadURL := opts.DownloadURL
-		if downloadURL == "" {
-			downloadURL = os.Getenv("MEMONGO_DOWNLOAD_URL")
-		}
-		if downloadURL == "" {
-			spec, err := mongobin.MakeDownloadSpec(opts.MongoVersion)
-			if err != nil {
-				return nil, err
-			}
-
-			downloadURL = spec.GetDownloadURL()
-		}
-
-		// Download or fetch from cache
-		var err error
-
-		downloadLogger := log.New(ioutil.Discard, "", 0)
-		if opts.LogLevel <= LogLevelInfo {
-			downloadLogger = logger.out
-		}
-
-		binPath, err = mongobin.GetOrDownloadMongod(downloadURL, cachePath, downloadLogger)
-		if err != nil {
-			return nil, err
-		}
+	logger := opts.getLogger()
+	binPath, err := opts.getOrDownloadBinPath()
+	if err != nil {
+		return nil, err
 	}
 
 	// Create a db dir. Even the ephemeralForTest engine needs a dbpath.
@@ -124,6 +54,9 @@ func StartWithOptions(opts *MemongoOptions) (*MemongoServer, error) {
 	}
 
 	// Construct the command and attach stdout/stderr handlers
+
+	//  Safe to pass binPath and dbDir
+	//nolint:gosec
 	cmd := exec.Command(binPath, "--storageEngine", "ephemeralForTest", "--dbpath", dbDir, "--port", "0")
 
 	stdoutHandler, startupErrCh, startupPortCh := stdoutHandler(logger)
@@ -133,7 +66,11 @@ func StartWithOptions(opts *MemongoOptions) (*MemongoServer, error) {
 	// Run the server
 	err = cmd.Start()
 	if err != nil {
-		os.RemoveAll(dbDir)
+		remErr := os.RemoveAll(dbDir)
+		if remErr != nil {
+			logger.Warnf("error removing data directory: %s", remErr)
+		}
+
 		return nil, err
 	}
 
@@ -141,8 +78,16 @@ func StartWithOptions(opts *MemongoOptions) (*MemongoServer, error) {
 	// dies, the mongo server will be killed (and not reparented under init)
 	watcherCmd, err := monitor.RunMonitor(os.Getpid(), cmd.Process.Pid)
 	if err != nil {
-		_ = cmd.Process.Kill()
-		os.RemoveAll(dbDir)
+		killErr := cmd.Process.Kill()
+		if killErr != nil {
+			logger.Warnf("error stopping mongo process: %s", killErr)
+		}
+
+		remErr := os.RemoveAll(dbDir)
+		if remErr != nil {
+			logger.Warnf("error removing data directory: %s", remErr)
+		}
+
 		return nil, err
 	}
 
@@ -153,17 +98,33 @@ func StartWithOptions(opts *MemongoOptions) (*MemongoServer, error) {
 	case p := <-startupPortCh:
 		port = p
 	case err := <-startupErrCh:
-		_ = cmd.Process.Kill()
-		os.RemoveAll(dbDir)
+		killErr := cmd.Process.Kill()
+		if killErr != nil {
+			logger.Warnf("error stopping mongo process: %s", killErr)
+		}
+
+		remErr := os.RemoveAll(dbDir)
+		if remErr != nil {
+			logger.Warnf("error removing data directory: %s", remErr)
+		}
+
 		return nil, err
 	case <-time.After(10 * time.Second):
-		_ = cmd.Process.Kill()
-		os.RemoveAll(dbDir)
+		killErr := cmd.Process.Kill()
+		if killErr != nil {
+			logger.Warnf("error stopping mongo process: %s", killErr)
+		}
+
+		remErr := os.RemoveAll(dbDir)
+		if remErr != nil {
+			logger.Warnf("error removing data directory: %s", remErr)
+		}
+
 		return nil, errors.New("timed out waiting for mongod to start")
 	}
 
 	// Return a Memongo server
-	return &MemongoServer{
+	return &Server{
 		cmd:        cmd,
 		watcherCmd: watcherCmd,
 		dbDir:      dbDir,
@@ -173,17 +134,23 @@ func StartWithOptions(opts *MemongoOptions) (*MemongoServer, error) {
 }
 
 // Port returns the port the server is listening on.
-func (s *MemongoServer) Port() int {
+func (s *Server) Port() int {
 	return s.port
 }
 
 // URI returns a mongodb:// URI to connect to
-func (s *MemongoServer) URI() string {
-	return "mongodb://localhost:" + strconv.Itoa(s.port)
+func (s *Server) URI() string {
+	return fmt.Sprintf("mongodb://localhost:%d", s.port)
+}
+
+// URIWithRandomDB returns a mongodb:// URI to connect to, with
+// a random database name (e.g. mongodb://localhost:1234/somerandomname)
+func (s *Server) URIWithRandomDB() string {
+	return fmt.Sprintf("mongodb://localhost:%d/%s", s.port, RandomDatabase())
 }
 
 // Stop kills the mongo server
-func (s *MemongoServer) Stop() {
+func (s *Server) Stop() {
 	err := s.cmd.Process.Kill()
 	if err != nil {
 		s.logger.Warnf("error stopping mongod process: %s", err)
@@ -219,7 +186,7 @@ var reShuttingDown = regexp.MustCompile("shutting down with code")
 // be sent to the port channel if the server start up correctly, and an
 // error will be send to the error channel if the server does not start up
 // correctly.
-func stdoutHandler(log *logger) (io.Writer, <-chan error, <-chan int) {
+func stdoutHandler(log *memongolog.Logger) (io.Writer, <-chan error, <-chan int) {
 	errChan := make(chan error)
 	portChan := make(chan int)
 
@@ -277,7 +244,7 @@ func stdoutHandler(log *logger) (io.Writer, <-chan error, <-chan int) {
 }
 
 // The stderr handler just relays messages from stderr to our logger
-func stderrHandler(log *logger) io.Writer {
+func stderrHandler(log *memongolog.Logger) io.Writer {
 	reader, writer := io.Pipe()
 
 	go func() {

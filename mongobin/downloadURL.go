@@ -2,8 +2,8 @@ package mongobin
 
 import "fmt"
 
-
-
+// GetDownloadURL returns the download URL to download the binary
+// from the MongoDB website
 func (spec *DownloadSpec) GetDownloadURL() string {
 	archiveName := "mongodb-"
 

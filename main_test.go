@@ -12,6 +12,7 @@ import (
 func TestBasic(t *testing.T) {
 	server, err := Start("4.0.5")
 	require.NoError(t, err)
+	defer server.Stop()
 
 	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(server.URI()))
 	require.NoError(t, err)

@@ -1,10 +1,9 @@
 package mongobin
 
 import (
-	"log"
-	"os"
 	"testing"
 
+	"github.com/benweissmann/memongo/memongolog"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,7 +22,7 @@ func TestGetOrDownload(t *testing.T) {
 	require.NoError(t, err)
 
 	// First call should download the file
-	path, err := GetOrDownloadMongod(spec.GetDownloadURL(), cacheDir, log.New(os.Stdout, "memongo: ", 0))
+	path, err := GetOrDownloadMongod(spec.GetDownloadURL(), cacheDir, memongolog.New(nil, memongolog.LogLevelDebug))
 	require.NoError(t, err)
 
 	assert.Equal(t, cacheDir+"/mongodb-osx-ssl-x86_64-4_0_5_tgz_d50ef2155b/mongod", path)
@@ -35,7 +34,7 @@ func TestGetOrDownload(t *testing.T) {
 	assert.True(t, stat.Mode()&0100 != 0)
 
 	// Second call should used the cached file
-	path2, err := GetOrDownloadMongod(spec.GetDownloadURL(), cacheDir, log.New(os.Stdout, "memongo: ", 0))
+	path2, err := GetOrDownloadMongod(spec.GetDownloadURL(), cacheDir, memongolog.New(nil, memongolog.LogLevelDebug))
 	require.NoError(t, err)
 
 	assert.Equal(t, path, path2)

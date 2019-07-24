@@ -41,6 +41,7 @@ type DownloadSpec struct {
 	OSName string
 }
 
+// MakeDownloadSpec returns a DownloadSpec for the current operating system
 func MakeDownloadSpec(version string) (*DownloadSpec, error) {
 	parsedVersion, versionErr := parseVersion(version)
 	if versionErr != nil {
@@ -141,6 +142,8 @@ func detectOSName(mongoVersion []int) string {
 		return osNameFromOsRelease(osRelease, mongoVersion)
 	}
 
+	// We control etcRedhatRelease
+	//nolint:gosec
 	redhatRelease, redhatReleaseErr := ioutil.ReadFile(etcRedhatRelease)
 	if redhatReleaseErr == nil {
 		return osNameFromRedhatRelease(string(redhatRelease))

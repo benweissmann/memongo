@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const TEST_MONGO_VERSION = "4.0.5"
+const testMongoVersion = "4.0.5"
 
 func TestMakeDownloadSpec(t *testing.T) {
 	tests := map[string]struct {
@@ -23,7 +23,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 			goOs: "darwin",
 
 			expectedSpec: &DownloadSpec{
-				Version:  TEST_MONGO_VERSION,
+				Version:  testMongoVersion,
 				Platform: "osx",
 				Arch:     "x86_64",
 				OSName:   "",
@@ -38,7 +38,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 			etcFolder: "ubuntu1810",
 
 			expectedSpec: &DownloadSpec{
-				Version:  TEST_MONGO_VERSION,
+				Version:  testMongoVersion,
 				Platform: "linux",
 				Arch:     "x86_64",
 				OSName:   "ubuntu1804",
@@ -48,7 +48,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 			etcFolder: "ubuntu1804",
 
 			expectedSpec: &DownloadSpec{
-				Version:  TEST_MONGO_VERSION,
+				Version:  testMongoVersion,
 				Platform: "linux",
 				Arch:     "x86_64",
 				OSName:   "ubuntu1804",
@@ -80,7 +80,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 			etcFolder: "ubuntu1604",
 
 			expectedSpec: &DownloadSpec{
-				Version:  TEST_MONGO_VERSION,
+				Version:  testMongoVersion,
 				Platform: "linux",
 				Arch:     "x86_64",
 				OSName:   "ubuntu1604",
@@ -101,7 +101,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 			etcFolder: "ubuntu1404",
 
 			expectedSpec: &DownloadSpec{
-				Version:  TEST_MONGO_VERSION,
+				Version:  testMongoVersion,
 				Platform: "linux",
 				Arch:     "x86_64",
 				OSName:   "ubuntu1404",
@@ -111,7 +111,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 			etcFolder: "suse12",
 
 			expectedSpec: &DownloadSpec{
-				Version:  TEST_MONGO_VERSION,
+				Version:  testMongoVersion,
 				Platform: "linux",
 				Arch:     "x86_64",
 				OSName:   "suse12",
@@ -121,7 +121,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 			etcFolder: "rhel7",
 
 			expectedSpec: &DownloadSpec{
-				Version:  TEST_MONGO_VERSION,
+				Version:  testMongoVersion,
 				Platform: "linux",
 				Arch:     "x86_64",
 				OSName:   "rhel70",
@@ -131,7 +131,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 			etcFolder: "rhel6",
 
 			expectedSpec: &DownloadSpec{
-				Version:  TEST_MONGO_VERSION,
+				Version:  testMongoVersion,
 				Platform: "linux",
 				Arch:     "x86_64",
 				OSName:   "rhel62",
@@ -141,7 +141,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 			etcFolder: "debianstretch",
 
 			expectedSpec: &DownloadSpec{
-				Version:  TEST_MONGO_VERSION,
+				Version:  testMongoVersion,
 				Platform: "linux",
 				Arch:     "x86_64",
 				OSName:   "debian92",
@@ -173,7 +173,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 			etcFolder: "debianjessie",
 
 			expectedSpec: &DownloadSpec{
-				Version:  TEST_MONGO_VERSION,
+				Version:  testMongoVersion,
 				Platform: "linux",
 				Arch:     "x86_64",
 				OSName:   "debian81",
@@ -194,7 +194,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 			etcFolder: "amazon",
 
 			expectedSpec: &DownloadSpec{
-				Version:  TEST_MONGO_VERSION,
+				Version:  testMongoVersion,
 				Platform: "linux",
 				Arch:     "x86_64",
 				OSName:   "amazon",
@@ -204,7 +204,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 			etcFolder: "amazon2",
 
 			expectedSpec: &DownloadSpec{
-				Version:  TEST_MONGO_VERSION,
+				Version:  testMongoVersion,
 				Platform: "linux",
 				Arch:     "x86_64",
 				OSName:   "amazon2",
@@ -225,7 +225,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 			etcFolder: "old-debian",
 
 			expectedSpec: &DownloadSpec{
-				Version:  TEST_MONGO_VERSION,
+				Version:  testMongoVersion,
 				Platform: "linux",
 				Arch:     "x86_64",
 				OSName:   "",
@@ -235,7 +235,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 			etcFolder: "old-redhat",
 
 			expectedSpec: &DownloadSpec{
-				Version:  TEST_MONGO_VERSION,
+				Version:  testMongoVersion,
 				Platform: "linux",
 				Arch:     "x86_64",
 				OSName:   "",
@@ -245,7 +245,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 			etcFolder: "old-sles",
 
 			expectedSpec: &DownloadSpec{
-				Version:  TEST_MONGO_VERSION,
+				Version:  testMongoVersion,
 				Platform: "linux",
 				Arch:     "x86_64",
 				OSName:   "",
@@ -255,7 +255,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 			etcFolder: "old-ubuntu",
 
 			expectedSpec: &DownloadSpec{
-				Version:  TEST_MONGO_VERSION,
+				Version:  testMongoVersion,
 				Platform: "linux",
 				Arch:     "x86_64",
 				OSName:   "",
@@ -265,7 +265,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 			etcFolder: "other-linux",
 
 			expectedSpec: &DownloadSpec{
-				Version:  TEST_MONGO_VERSION,
+				Version:  testMongoVersion,
 				Platform: "linux",
 				Arch:     "x86_64",
 				OSName:   "",
@@ -275,7 +275,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 			etcFolder: "empty-etc",
 
 			expectedSpec: &DownloadSpec{
-				Version:  TEST_MONGO_VERSION,
+				Version:  testMongoVersion,
 				Platform: "linux",
 				Arch:     "x86_64",
 				OSName:   "",
@@ -285,7 +285,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 			etcFolder: "ubuntu-malformed",
 
 			expectedSpec: &DownloadSpec{
-				Version:  TEST_MONGO_VERSION,
+				Version:  testMongoVersion,
 				Platform: "linux",
 				Arch:     "x86_64",
 				OSName:   "",
@@ -409,7 +409,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 
 			mongoVersion := test.mongoVersion
 			if mongoVersion == "" {
-				mongoVersion = TEST_MONGO_VERSION
+				mongoVersion = testMongoVersion
 			}
 
 			result, err := MakeDownloadSpec(mongoVersion)

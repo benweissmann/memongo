@@ -7,13 +7,13 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"path"
 	"regexp"
 	"strings"
 
+	"github.com/benweissmann/memongo/memongolog"
 	"github.com/spf13/afero"
 )
 
@@ -25,11 +25,11 @@ func init() {
 	}
 }
 
-// GerOrDownload returns the path to the mongod binary from the tarball
+// GetOrDownloadMongod returns the path to the mongod binary from the tarball
 // at the given URL. If the URL has not yet been downloaded, it's downloaded
 // and saved the the cache. If it has been downloaded, the existing mongod
 // path is returned.
-func GetOrDownloadMongod(urlStr string, cachePath string, logger *log.Logger) (string, error) {
+func GetOrDownloadMongod(urlStr string, cachePath string, logger *memongolog.Logger) (string, error) {
 	dirname, dirErr := directoryNameForURL(urlStr)
 	if dirErr != nil {
 		return "", dirErr
@@ -44,13 +44,14 @@ func GetOrDownloadMongod(urlStr string, cachePath string, logger *log.Logger) (s
 		return "", fmt.Errorf("error while checking for mongod in cache: %s", existsErr)
 	}
 	if existsInCache {
-		logger.Printf("[memongo] [INFO]  mongod from %s exists in cache at %s", urlStr, mongodPath)
+		logger.Debugf("mongod from %s exists in cache at %s", urlStr, mongodPath)
 		return mongodPath, nil
 	}
 
-	logger.Printf("[memongo] [INFO]  mongod from %s does not exist in cache, downloading to %s", urlStr, mongodPath)
+	logger.Infof("mongod from %s does not exist in cache, downloading to %s", urlStr, mongodPath)
 
 	// Download the file
+	// nolint:gosec
 	resp, httpGetErr := http.Get(urlStr)
 	if httpGetErr != nil {
 		return "", fmt.Errorf("error getting tarball from %s: %s", urlStr, httpGetErr)
@@ -104,7 +105,7 @@ func GetOrDownloadMongod(urlStr string, cachePath string, logger *log.Logger) (s
 	}
 
 	// Extract to a temp file first, then copy to the destination, so we get
-	// atomic behavior if there's mutliple parallel downloaders
+	// atomic behavior if there's multiple parallel downloaders
 	mongodTmpFile, tmpFileErr := afs.TempFile("", "")
 	if tmpFileErr != nil {
 		return "", fmt.Errorf("error creating temp file for mongod: %s", tmpFileErr)
@@ -118,7 +119,7 @@ func GetOrDownloadMongod(urlStr string, cachePath string, logger *log.Logger) (s
 		return "", fmt.Errorf("error writing mongod binary at %s: %s", mongodTmpFile.Name(), writeErr)
 	}
 
-	mongodTmpFile.Close()
+	_ = mongodTmpFile.Close()
 
 	chmodErr := afs.Chmod(mongodTmpFile.Name(), 0755)
 	if chmodErr != nil {
