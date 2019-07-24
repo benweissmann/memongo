@@ -1,10 +1,15 @@
 package memongo
 
 import (
+	"errors"
+	"fmt"
 	"log"
+	"net"
 	"os"
 	"path"
 	"runtime"
+	"strconv"
+	"strings"
 
 	"github.com/benweissmann/memongo/memongolog"
 	"github.com/benweissmann/memongo/mongobin"
@@ -12,6 +17,10 @@ import (
 
 // Options is the configuration options for a launched MongoDB binary
 type Options struct {
+	// Port to run MongoDB on. If this is not specified, a random (OS-assigned)
+	// port will be used
+	Port int
+
 	// Path to the cache for downloaded mongod binaries. Defaults to the
 	// system cache location.
 	CachePath string
@@ -62,12 +71,48 @@ func (opts *Options) fillDefaults() error {
 			opts.DownloadURL = os.Getenv("MEMONGO_DOWNLOAD_URL")
 		}
 		if opts.DownloadURL == "" {
+			if opts.MongoVersion == "" {
+				return errors.New("one of MongoVersion, DownloadURL, or MongodBin must be given")
+			}
 			spec, err := mongobin.MakeDownloadSpec(opts.MongoVersion)
 			if err != nil {
 				return err
 			}
 
 			opts.DownloadURL = spec.GetDownloadURL()
+		}
+	}
+
+	// Determine the port number
+	if opts.Port == 0 {
+		mongoVersionEnv := os.Getenv("MEMONGO_MONGOD_PORT")
+		if mongoVersionEnv != "" {
+			port, err := strconv.Atoi(mongoVersionEnv)
+
+			if err != nil {
+				return fmt.Errorf("error parsing MEMONGO_MONGOD_PORT: %s", err)
+			}
+
+			opts.Port = port
+		}
+	}
+
+	if opts.Port == 0 {
+		// MongoDB after version 4 correctly reports what port it's running on if
+		// we tell it to run on port 0, which is ideal -- we just start it on port
+		// 0, the OS assigns a port, and mongo reports in the logs what port it
+		// got.
+		//
+		// For earlier versions, mongo just print "waiting for connections on port 0"
+		// which is unhelpful. So we start up a server and see what port we get,
+		// then shut down that server
+		if opts.MongoVersion == "" || parseMongoMajorVersion(opts.MongoVersion) < 4 {
+			port, err := getFreePort()
+			if err != nil {
+				return fmt.Errorf("error finding a free port: %s", err)
+			}
+
+			opts.Port = port
 		}
 	}
 
@@ -90,4 +135,33 @@ func (opts *Options) getOrDownloadBinPath() (string, error) {
 	}
 
 	return binPath, nil
+}
+
+func parseMongoMajorVersion(version string) int {
+	strParts := strings.Split(version, ".")
+	if len(strParts) == 0 {
+		return 0
+	}
+
+	maj, err := strconv.Atoi(strParts[0])
+	if err != nil {
+		return 0
+	}
+
+	return maj
+}
+
+func getFreePort() (int, error) {
+	// Based on: https://github.com/phayes/freeport/blob/master/freeport.go
+	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
+	if err != nil {
+		return 0, err
+	}
+
+	l, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		return 0, err
+	}
+	defer l.Close()
+	return l.Addr().(*net.TCPAddr).Port, nil
 }

@@ -42,6 +42,9 @@ func StartWithOptions(opts *Options) (*Server, error) {
 	}
 
 	logger := opts.getLogger()
+
+	logger.Infof("Starting MongoDB with options %#v", opts)
+
 	binPath, err := opts.getOrDownloadBinPath()
 	if err != nil {
 		return nil, err
@@ -57,7 +60,7 @@ func StartWithOptions(opts *Options) (*Server, error) {
 
 	//  Safe to pass binPath and dbDir
 	//nolint:gosec
-	cmd := exec.Command(binPath, "--storageEngine", "ephemeralForTest", "--dbpath", dbDir, "--port", "0")
+	cmd := exec.Command(binPath, "--storageEngine", "ephemeralForTest", "--dbpath", dbDir, "--port", strconv.Itoa(opts.Port))
 
 	stdoutHandler, startupErrCh, startupPortCh := stdoutHandler(logger)
 	cmd.Stdout = stdoutHandler
