@@ -16,7 +16,13 @@ func (spec *DownloadSpec) GetDownloadURL() string {
 
 		archiveName += spec.Version + ".tgz"
 	} else {
-		archiveName += "osx-ssl-" + spec.Arch + "-" + spec.Version + ".tgz"
+		if spec.SSLBuildNeeded {
+			archiveName += "osx-ssl-"
+		} else {
+			archiveName += "macos-"
+		}
+
+		archiveName += spec.Arch + "-" + spec.Version + ".tgz"
 	}
 
 	return fmt.Sprintf(
