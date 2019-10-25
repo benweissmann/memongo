@@ -15,11 +15,11 @@ quickly and easily. That's where `memongo` comes in!
 
 # Project Status
 
-Pre-alpha. Basic tests work. Full testing and CI setup is not complete. Many features may be broken.
+Beta. Tests and CI are set up and working, but more esoteric configurations may not work. If Memongo isn't working on your platform, you might want to use `memongo.StartWithOptions()` and pass the correct download URL for your platform manually.
 
 # Caveats and Notes
 
-Currently, `memongo` only supports UNIX systems. CI will run on MacOS, Ubuntu Xenial, Ubuntu Trusty, and Ubuntu Precise. Other flavors of Linux may or may not work. CI will also run inside an Alpine Linux docker container with a system-installed copy of MongoDB.
+Currently, `memongo` only supports UNIX systems. CI will run on MacOS, Ubuntu Xenial, Ubuntu Trusty, and Ubuntu Precise. Other flavors of Linux may or may not work.
 
 # Basic Usage
 
