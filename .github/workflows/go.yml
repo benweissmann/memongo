@@ -37,5 +37,7 @@ jobs:
 
     - name: Lint
       run: |
-        curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b /usr/local/bin v1.21.0
+        mkdir ./bin
+        curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ./bin v1.21.0
+        export PATH="$(pwd)/bin:$PATH"
         ./scripts/runLint.sh
