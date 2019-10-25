@@ -112,7 +112,7 @@ func StartWithOptions(opts *Options) (*Server, error) {
 		}
 
 		return nil, err
-	case <-time.After(30 * time.Second):
+	case <-time.After(10 * time.Second):
 		killErr := cmd.Process.Kill()
 		if killErr != nil {
 			logger.Warnf("error stopping mongo process: %s", killErr)
@@ -202,7 +202,7 @@ func stdoutHandler(log *memongolog.Logger) (io.Writer, <-chan error, <-chan int)
 		for scanner.Scan() {
 			line := scanner.Text()
 
-			log.Debugf("[Mongod stdout] %s", line)
+			log.Infof("[Mongod stdout] %s", line)
 
 			if !haveSentMessage {
 				downcaseLine := strings.ToLower(line)

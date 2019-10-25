@@ -13,9 +13,10 @@ func TestGetOrDownload(t *testing.T) {
 	afs = afero.Afero{Fs: afero.NewMemMapFs()}
 
 	spec := DownloadSpec{
-		Version:  "4.0.5",
-		Platform: "osx",
-		Arch:     "x86_64",
+		Version:        "4.0.5",
+		Platform:       "osx",
+		SSLBuildNeeded: true,
+		Arch:           "x86_64",
 	}
 
 	cacheDir, err := afs.TempDir("", "")

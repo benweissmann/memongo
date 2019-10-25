@@ -23,6 +23,10 @@ type DownloadSpec struct {
 	// Platform is "osx" or "linux"
 	Platform string
 
+	// SSLBuildNeeded is "ssl" if we need to download the SSL build for macOS
+	// (needed for <4.2)
+	SSLBuildNeeded bool
+
 	// Arch is always "x86_64"
 	Arch string
 
@@ -53,6 +57,12 @@ func MakeDownloadSpec(version string) (*DownloadSpec, error) {
 		return nil, platformErr
 	}
 
+	ssl := false
+	if platform == "osx" && !versionGTE(parsedVersion, []int{4, 2, 0}) {
+		// pre-4.0, the MacOS builds had a special "ssl" designator in the URL
+		ssl = true
+	}
+
 	arch, archErr := detectArch()
 	if archErr != nil {
 		return nil, archErr
@@ -60,11 +70,16 @@ func MakeDownloadSpec(version string) (*DownloadSpec, error) {
 
 	osName := detectOSName(parsedVersion)
 
+	if platform == "linux" && osName == "" && versionGTE(parsedVersion, []int{4, 2, 0}) {
+		return nil, &UnsupportedSystemError{msg: "MongoDB 4.2 removed support for generic linux tarballs. Specify the download URL manually or use a supported distro. See: https://www.mongodb.com/blog/post/a-proposal-to-endoflife-our-generic-linux-tar-packages"}
+	}
+
 	return &DownloadSpec{
-		Version:  version,
-		Arch:     arch,
-		Platform: platform,
-		OSName:   osName,
+		Version:        version,
+		Arch:           arch,
+		SSLBuildNeeded: ssl,
+		Platform:       platform,
+		OSName:         osName,
 	}, nil
 }
 

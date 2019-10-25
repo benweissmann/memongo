@@ -19,14 +19,27 @@ func TestMakeDownloadSpec(t *testing.T) {
 		expectedSpec  *DownloadSpec
 		expectedError string
 	}{
-		"mac": {
+		"mac and older mongo": {
 			goOs: "darwin",
 
 			expectedSpec: &DownloadSpec{
-				Version:  testMongoVersion,
-				Platform: "osx",
-				Arch:     "x86_64",
-				OSName:   "",
+				Version:        testMongoVersion,
+				Platform:       "osx",
+				SSLBuildNeeded: true,
+				Arch:           "x86_64",
+				OSName:         "",
+			},
+		},
+		"mac and newer mongo": {
+			goOs:         "darwin",
+			mongoVersion: "4.2.1",
+
+			expectedSpec: &DownloadSpec{
+				Version:        "4.2.1",
+				Platform:       "osx",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "",
 			},
 		},
 		"windows": {
@@ -38,20 +51,22 @@ func TestMakeDownloadSpec(t *testing.T) {
 			etcFolder: "ubuntu1810",
 
 			expectedSpec: &DownloadSpec{
-				Version:  testMongoVersion,
-				Platform: "linux",
-				Arch:     "x86_64",
-				OSName:   "ubuntu1804",
+				Version:        testMongoVersion,
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "ubuntu1804",
 			},
 		},
 		"ubuntu 18.04": {
 			etcFolder: "ubuntu1804",
 
 			expectedSpec: &DownloadSpec{
-				Version:  testMongoVersion,
-				Platform: "linux",
-				Arch:     "x86_64",
-				OSName:   "ubuntu1804",
+				Version:        testMongoVersion,
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "ubuntu1804",
 			},
 		},
 		"ubuntu 18.04 older mongo": {
@@ -59,10 +74,11 @@ func TestMakeDownloadSpec(t *testing.T) {
 			etcFolder:    "ubuntu1804",
 
 			expectedSpec: &DownloadSpec{
-				Version:  "4.0.0",
-				Platform: "linux",
-				Arch:     "x86_64",
-				OSName:   "ubuntu1604",
+				Version:        "4.0.0",
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "ubuntu1604",
 			},
 		},
 		"ubuntu 18.04 much older mongo": {
@@ -70,20 +86,22 @@ func TestMakeDownloadSpec(t *testing.T) {
 			etcFolder:    "ubuntu1804",
 
 			expectedSpec: &DownloadSpec{
-				Version:  "3.2.6",
-				Platform: "linux",
-				Arch:     "x86_64",
-				OSName:   "ubuntu1404",
+				Version:        "3.2.6",
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "ubuntu1404",
 			},
 		},
 		"ubuntu 16.04": {
 			etcFolder: "ubuntu1604",
 
 			expectedSpec: &DownloadSpec{
-				Version:  testMongoVersion,
-				Platform: "linux",
-				Arch:     "x86_64",
-				OSName:   "ubuntu1604",
+				Version:        testMongoVersion,
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "ubuntu1604",
 			},
 		},
 		"ubuntu 16.04 older mongo": {
@@ -91,60 +109,66 @@ func TestMakeDownloadSpec(t *testing.T) {
 			etcFolder:    "ubuntu1604",
 
 			expectedSpec: &DownloadSpec{
-				Version:  "3.2.6",
-				Platform: "linux",
-				Arch:     "x86_64",
-				OSName:   "ubuntu1404",
+				Version:        "3.2.6",
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "ubuntu1404",
 			},
 		},
 		"ubuntu 14.04": {
 			etcFolder: "ubuntu1404",
 
 			expectedSpec: &DownloadSpec{
-				Version:  testMongoVersion,
-				Platform: "linux",
-				Arch:     "x86_64",
-				OSName:   "ubuntu1404",
+				Version:        testMongoVersion,
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "ubuntu1404",
 			},
 		},
 		"SUSE 12": {
 			etcFolder: "suse12",
 
 			expectedSpec: &DownloadSpec{
-				Version:  testMongoVersion,
-				Platform: "linux",
-				Arch:     "x86_64",
-				OSName:   "suse12",
+				Version:        testMongoVersion,
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "suse12",
 			},
 		},
 		"RHEL 7": {
 			etcFolder: "rhel7",
 
 			expectedSpec: &DownloadSpec{
-				Version:  testMongoVersion,
-				Platform: "linux",
-				Arch:     "x86_64",
-				OSName:   "rhel70",
+				Version:        testMongoVersion,
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "rhel70",
 			},
 		},
 		"RHEL 6": {
 			etcFolder: "rhel6",
 
 			expectedSpec: &DownloadSpec{
-				Version:  testMongoVersion,
-				Platform: "linux",
-				Arch:     "x86_64",
-				OSName:   "rhel62",
+				Version:        testMongoVersion,
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "rhel62",
 			},
 		},
 		"Debian stretch": {
 			etcFolder: "debianstretch",
 
 			expectedSpec: &DownloadSpec{
-				Version:  testMongoVersion,
-				Platform: "linux",
-				Arch:     "x86_64",
-				OSName:   "debian92",
+				Version:        testMongoVersion,
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "debian92",
 			},
 		},
 		"Debian stretch older mongo": {
@@ -152,10 +176,11 @@ func TestMakeDownloadSpec(t *testing.T) {
 			etcFolder:    "debianstretch",
 
 			expectedSpec: &DownloadSpec{
-				Version:  "3.6.4",
-				Platform: "linux",
-				Arch:     "x86_64",
-				OSName:   "debian81",
+				Version:        "3.6.4",
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "debian81",
 			},
 		},
 		"Debian stretch much older mongo": {
@@ -163,20 +188,22 @@ func TestMakeDownloadSpec(t *testing.T) {
 			etcFolder:    "debianstretch",
 
 			expectedSpec: &DownloadSpec{
-				Version:  "3.2.7",
-				Platform: "linux",
-				Arch:     "x86_64",
-				OSName:   "",
+				Version:        "3.2.7",
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "",
 			},
 		},
 		"Debian jessie": {
 			etcFolder: "debianjessie",
 
 			expectedSpec: &DownloadSpec{
-				Version:  testMongoVersion,
-				Platform: "linux",
-				Arch:     "x86_64",
-				OSName:   "debian81",
+				Version:        testMongoVersion,
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "debian81",
 			},
 		},
 		"Debian jessie older mongo": {
@@ -184,30 +211,33 @@ func TestMakeDownloadSpec(t *testing.T) {
 			etcFolder:    "debianjessie",
 
 			expectedSpec: &DownloadSpec{
-				Version:  "3.2.7",
-				Platform: "linux",
-				Arch:     "x86_64",
-				OSName:   "",
+				Version:        "3.2.7",
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "",
 			},
 		},
 		"Amazon Linux": {
 			etcFolder: "amazon",
 
 			expectedSpec: &DownloadSpec{
-				Version:  testMongoVersion,
-				Platform: "linux",
-				Arch:     "x86_64",
-				OSName:   "amazon",
+				Version:        testMongoVersion,
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "amazon",
 			},
 		},
 		"Amazon Linux 2": {
 			etcFolder: "amazon2",
 
 			expectedSpec: &DownloadSpec{
-				Version:  testMongoVersion,
-				Platform: "linux",
-				Arch:     "x86_64",
-				OSName:   "amazon2",
+				Version:        testMongoVersion,
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "amazon2",
 			},
 		},
 		"Amazon Linux 2 older mongo": {
@@ -215,80 +245,88 @@ func TestMakeDownloadSpec(t *testing.T) {
 			etcFolder:    "amazon2",
 
 			expectedSpec: &DownloadSpec{
-				Version:  "3.6.5",
-				Platform: "linux",
-				Arch:     "x86_64",
-				OSName:   "amazon",
+				Version:        "3.6.5",
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "amazon",
 			},
 		},
 		"Old Debian": {
 			etcFolder: "old-debian",
 
 			expectedSpec: &DownloadSpec{
-				Version:  testMongoVersion,
-				Platform: "linux",
-				Arch:     "x86_64",
-				OSName:   "",
+				Version:        testMongoVersion,
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "",
 			},
 		},
 		"Old RedHat": {
 			etcFolder: "old-redhat",
 
 			expectedSpec: &DownloadSpec{
-				Version:  testMongoVersion,
-				Platform: "linux",
-				Arch:     "x86_64",
-				OSName:   "",
+				Version:        testMongoVersion,
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "",
 			},
 		},
 		"Old SUSE": {
 			etcFolder: "old-sles",
 
 			expectedSpec: &DownloadSpec{
-				Version:  testMongoVersion,
-				Platform: "linux",
-				Arch:     "x86_64",
-				OSName:   "",
+				Version:        testMongoVersion,
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "",
 			},
 		},
 		"Old Ubuntu": {
 			etcFolder: "old-ubuntu",
 
 			expectedSpec: &DownloadSpec{
-				Version:  testMongoVersion,
-				Platform: "linux",
-				Arch:     "x86_64",
-				OSName:   "",
+				Version:        testMongoVersion,
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "",
 			},
 		},
 		"Other Linux": {
 			etcFolder: "other-linux",
 
 			expectedSpec: &DownloadSpec{
-				Version:  testMongoVersion,
-				Platform: "linux",
-				Arch:     "x86_64",
-				OSName:   "",
+				Version:        testMongoVersion,
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "",
 			},
 		},
 		"Empty /etc": {
 			etcFolder: "empty-etc",
 
 			expectedSpec: &DownloadSpec{
-				Version:  testMongoVersion,
-				Platform: "linux",
-				Arch:     "x86_64",
-				OSName:   "",
+				Version:        testMongoVersion,
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "",
 			},
 		},
 		"Malformed ubuntu": {
 			etcFolder: "ubuntu-malformed",
 
 			expectedSpec: &DownloadSpec{
-				Version:  testMongoVersion,
-				Platform: "linux",
-				Arch:     "x86_64",
-				OSName:   "",
+				Version:        testMongoVersion,
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "",
 			},
 		},
 		"Other OS": {
@@ -302,43 +340,48 @@ func TestMakeDownloadSpec(t *testing.T) {
 			expectedError: "memongo does not support automatic downloading on your system: your architecture, 386, is not supported",
 		},
 		"MongoDB 4.2": {
+			etcFolder:    "ubuntu1804",
 			mongoVersion: "4.2.3",
 
 			expectedSpec: &DownloadSpec{
-				Version:  "4.2.3",
-				Platform: "linux",
-				Arch:     "x86_64",
-				OSName:   "",
+				Version:        "4.2.3",
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "ubuntu1804",
 			},
 		},
 		"MongoDB 3.6": {
 			mongoVersion: "3.6.1",
 
 			expectedSpec: &DownloadSpec{
-				Version:  "3.6.1",
-				Platform: "linux",
-				Arch:     "x86_64",
-				OSName:   "",
+				Version:        "3.6.1",
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "",
 			},
 		},
 		"MongoDB 3.4": {
 			mongoVersion: "3.4.0",
 
 			expectedSpec: &DownloadSpec{
-				Version:  "3.4.0",
-				Platform: "linux",
-				Arch:     "x86_64",
-				OSName:   "",
+				Version:        "3.4.0",
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "",
 			},
 		},
 		"MongoDB 3.2": {
 			mongoVersion: "3.2.0",
 
 			expectedSpec: &DownloadSpec{
-				Version:  "3.2.0",
-				Platform: "linux",
-				Arch:     "x86_64",
-				OSName:   "",
+				Version:        "3.2.0",
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "",
 			},
 		},
 		"MongoDB 3.0": {
