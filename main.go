@@ -202,7 +202,7 @@ func stdoutHandler(log *memongolog.Logger) (io.Writer, <-chan error, <-chan int)
 		for scanner.Scan() {
 			line := scanner.Text()
 
-			log.Infof("[Mongod stdout] %s", line)
+			log.Debugf("[Mongod stdout] %s", line)
 
 			if !haveSentMessage {
 				downcaseLine := strings.ToLower(line)
