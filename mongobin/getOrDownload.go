@@ -12,6 +12,7 @@ import (
 	"path"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/benweissmann/memongo/memongolog"
 	"github.com/spf13/afero"
@@ -49,6 +50,7 @@ func GetOrDownloadMongod(urlStr string, cachePath string, logger *memongolog.Log
 	}
 
 	logger.Infof("mongod from %s does not exist in cache, downloading to %s", urlStr, mongodPath)
+	downloadStartTime := time.Now()
 
 	// Download the file
 	// nolint:gosec
@@ -130,6 +132,8 @@ func GetOrDownloadMongod(urlStr string, cachePath string, logger *memongolog.Log
 	if renameErr != nil {
 		return "", fmt.Errorf("error writing mongod binary from %s to %s: %s", mongodTmpFile.Name(), mongodPath, writeErr)
 	}
+
+	logger.Infof("finished downloading mongod to %s in %s", mongodPath, time.Since(downloadStartTime).String())
 
 	return mongodPath, nil
 }

@@ -50,6 +50,8 @@ func StartWithOptions(opts *Options) (*Server, error) {
 		return nil, err
 	}
 
+	logger.Debugf("Using binary %s", binPath)
+
 	// Create a db dir. Even the ephemeralForTest engine needs a dbpath.
 	dbDir, err := ioutil.TempDir("", "")
 	if err != nil {
@@ -66,6 +68,8 @@ func StartWithOptions(opts *Options) (*Server, error) {
 	cmd.Stdout = stdoutHandler
 	cmd.Stderr = stderrHandler(logger)
 
+	logger.Debugf("Starting mongod")
+
 	// Run the server
 	err = cmd.Start()
 	if err != nil {
@@ -76,6 +80,8 @@ func StartWithOptions(opts *Options) (*Server, error) {
 
 		return nil, err
 	}
+
+	logger.Debugf("Started mongod; starting watcher")
 
 	// Start a watcher: the watcher is a subprocess that ensure if this process
 	// dies, the mongo server will be killed (and not reparented under init)
@@ -93,6 +99,9 @@ func StartWithOptions(opts *Options) (*Server, error) {
 
 		return nil, err
 	}
+
+	logger.Debugf("Started watcher; waiting for mongod to report port number")
+	startupTime := time.Now()
 
 	// Wait for the stdout handler to report the server's port number (or a
 	// startup error)
@@ -112,7 +121,7 @@ func StartWithOptions(opts *Options) (*Server, error) {
 		}
 
 		return nil, err
-	case <-time.After(10 * time.Second):
+	case <-time.After(opts.StartupTimeout):
 		killErr := cmd.Process.Kill()
 		if killErr != nil {
 			logger.Warnf("error stopping mongo process: %s", killErr)
@@ -125,6 +134,8 @@ func StartWithOptions(opts *Options) (*Server, error) {
 
 		return nil, errors.New("timed out waiting for mongod to start")
 	}
+
+	logger.Debugf("mongod started up and reported a port number after %s", time.Since(startupTime).String())
 
 	// Return a Memongo server
 	return &Server{
