@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/benweissmann/memongo/memongolog"
 	"github.com/benweissmann/memongo/mongobin"
@@ -41,6 +42,10 @@ type Options struct {
 
 	// A LogLevel to log at. Defaults to LogLevelInfo.
 	LogLevel memongolog.LogLevel
+
+	// How long to wait for mongod to start up and report a port number. Does
+	// not include download time, only startup time. Defaults to 10 seconds.
+	StartupTimeout time.Duration
 }
 
 func (opts *Options) fillDefaults() error {
@@ -113,6 +118,10 @@ func (opts *Options) fillDefaults() error {
 			}
 
 			opts.Port = port
+		}
+
+		if opts.StartupTimeout == 0 {
+			opts.StartupTimeout = 10 * time.Second
 		}
 	}
 
