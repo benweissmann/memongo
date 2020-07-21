@@ -1,5 +1,7 @@
 module github.com/benweissmann/memongo
 
+go 1.14
+
 require (
 	github.com/acobaugh/osrelease v0.0.0-20181218015638-a93a0a55a249
 	github.com/go-stack/stack v1.8.0 // indirect
