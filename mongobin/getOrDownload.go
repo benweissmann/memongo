@@ -130,7 +130,7 @@ func GetOrDownloadMongod(urlStr string, cachePath string, logger *memongolog.Log
 
 	renameErr := afs.Rename(mongodTmpFile.Name(), mongodPath)
 	if renameErr != nil {
-		return "", fmt.Errorf("error writing mongod binary from %s to %s: %s", mongodTmpFile.Name(), mongodPath, writeErr)
+		return "", fmt.Errorf("error writing mongod binary from %s to %s: %s", mongodTmpFile.Name(), mongodPath, renameErr)
 	}
 
 	logger.Infof("finished downloading mongod to %s in %s", mongodPath, time.Since(downloadStartTime).String())
