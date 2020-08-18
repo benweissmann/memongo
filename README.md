@@ -33,7 +33,7 @@ func TestSomething(t *testing.T) {
   }
   defer mongoServer.Stop()
 
-  connectAndDoStuff(mongoServer.URL(), memongo.RandomDatabase())
+  connectAndDoStuff(mongoServer.URI(), memongo.RandomDatabase())
 }
 ```
 
@@ -53,7 +53,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestSomething(t *testing.T) {
-  connectAndDoStuff(mongoServer.URL(), memongo.RandomDatabase())
+  connectAndDoStuff(mongoServer.URI(), memongo.RandomDatabase())
 }
 ```
 
@@ -61,20 +61,20 @@ func TestSomething(t *testing.T) {
 
 Behind the scenes, when you run `Start()`, a few things are happening:
 
-1) If you specified a MongoDB version number (rather than a URL or binary path),
+1. If you specified a MongoDB version number (rather than a URL or binary path),
    `memongo` detects your operating system and platform to determine the
    download URL for the right MongoDB binary.
 
-2) If you specified a MongoDB version number or download URL, `memongo`
+2. If you specified a MongoDB version number or download URL, `memongo`
    downloads MongoDB to a cache location. For future runs, `memongo` will just
    use the copy from the cache. You only need to be connected to the internet
    the first time you run `Start()` for a particular MongoDB version.
 
-3) `memongo` starts a process running the downloaded `mongod` binary. It uses
+3. `memongo` starts a process running the downloaded `mongod` binary. It uses
    the `ephemeralForTest` storage engine, a temporary directory for a `dbpath`,
    and a random free port number.
 
-4) `memongo` also starts up a "watcher" process. This process is a simple
+4. `memongo` also starts up a "watcher" process. This process is a simple
    portable shell script that kills the `mongod` process when the current
    process exits. This ensures that we don't leave behind `mongod` processes,
    even if your tests exit uncleanly or you don't call `Stop()`.
