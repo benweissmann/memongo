@@ -3,7 +3,6 @@ package memongo
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/benweissmann/memongo/memongolog"
 
@@ -25,16 +24,10 @@ func TestDefaultOptions(t *testing.T) {
 			require.NoError(t, err)
 			defer server.Stop()
 
-			client, err := mongo.NewClient(options.Client().ApplyURI(server.URI()))
-
-			ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-			err = client.Connect(ctx)
-			if err != nil {
-				server.logger.Warnf("err Connect: %v", err)
-			}
-
+			client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(server.URI()))
 			require.NoError(t, err)
-			require.NoError(t, client.Ping(context.Background(), readpref.Primary()))
+
+			require.NoError(t, client.Ping(context.Background(), nil))
 		})
 	}
 }
@@ -52,10 +45,7 @@ func TestWithReplica(t *testing.T) {
 			require.NoError(t, err)
 			defer server.Stop()
 
-			client, err := mongo.NewClient(options.Client().ApplyURI(server.URI()))
-
-			ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-			err = client.Connect(ctx)
+			client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(server.URI()))
 			if err != nil {
 				server.logger.Warnf("err Connect: %v", err)
 			}

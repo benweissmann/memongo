@@ -9,7 +9,6 @@ import (
 	"path"
 	"runtime"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/benweissmann/memongo/memongolog"
@@ -138,20 +137,6 @@ func (opts *Options) getOrDownloadBinPath() (string, error) {
 	}
 
 	return binPath, nil
-}
-
-func parseMongoMajorVersion(version string) int {
-	strParts := strings.Split(version, ".")
-	if len(strParts) == 0 {
-		return 0
-	}
-
-	maj, err := strconv.Atoi(strParts[0])
-	if err != nil {
-		return 0
-	}
-
-	return maj
 }
 
 func getFreePort() (int, error) {
