@@ -143,6 +143,7 @@ func StartWithOptions(opts *Options) (*Server, error) {
 	// ---------- START OF REPLICA CODE ----------
 	if opts.ShouldUseReplica {
 		mongoCommand := fmt.Sprintf("mongo --port %d --eval \"rs.initiate()\"", opts.Port)
+		//nolint:gosec
 		cmd2 := exec.Command("bash", "-c", mongoCommand)
 		cmd2.Stdout = stdoutHandler
 		cmd2.Stderr = stderrHandler(logger)
