@@ -2,6 +2,7 @@ package memongo
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/benweissmann/memongo/memongolog"
@@ -45,7 +46,8 @@ func TestWithReplica(t *testing.T) {
 			require.NoError(t, err)
 			defer server.Stop()
 
-			client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(server.URI()))
+			uri := fmt.Sprintf("%s%s", server.URI(), "/retryWrites=false")
+			client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(uri))
 			if err != nil {
 				server.logger.Warnf("err Connect: %v", err)
 			}

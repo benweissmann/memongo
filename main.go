@@ -65,7 +65,7 @@ func StartWithOptions(opts *Options) (*Server, error) {
 	cmd := exec.Command(binPath, "--storageEngine", "ephemeralForTest", "--dbpath", dbDir, "--port", strconv.Itoa(opts.Port))
 	if opts.ShouldUseReplica {
 		//nolint:gosec
-		cmd = exec.Command(binPath, "--storageEngine", "ephemeralForTest", "--dbpath", dbDir, "--port", strconv.Itoa(opts.Port), "--replSet", "rs0", "--bind_ip", "localhost")
+		cmd = exec.Command(binPath, "--storageEngine", "wiredTiger", "--dbpath", dbDir, "--port", strconv.Itoa(opts.Port), "--replSet", "rs0", "--bind_ip", "localhost")
 	}
 
 	stdoutHandler, startupErrCh, startupPortCh := stdoutHandler(logger)
@@ -143,7 +143,7 @@ func StartWithOptions(opts *Options) (*Server, error) {
 
 	// ---------- START OF REPLICA CODE ----------
 	if opts.ShouldUseReplica {
-		mongoCommand := fmt.Sprintf("mongo --port %d --eval \"rs.initiate()\"", opts.Port)
+		mongoCommand := fmt.Sprintf("mongo --port %d --retryWrites --eval \"rs.initiate()\"", opts.Port)
 		//nolint:gosec
 		cmd2 := exec.Command("bash", "-c", mongoCommand)
 		cmd2.Stdout = stdoutHandler
