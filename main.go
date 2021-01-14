@@ -63,6 +63,10 @@ func StartWithOptions(opts *Options) (*Server, error) {
 	//  Safe to pass binPath and dbDir
 	//nolint:gosec
 	cmd := exec.Command(binPath, "--storageEngine", "ephemeralForTest", "--dbpath", dbDir, "--port", strconv.Itoa(opts.Port))
+	if opts.ShouldUseReplica {
+		//nolint:gosec
+		cmd = exec.Command(binPath, "--storageEngine", "wiredTiger", "--dbpath", dbDir, "--port", strconv.Itoa(opts.Port), "--replSet", "rs0", "--bind_ip", "localhost")
+	}
 
 	stdoutHandler, startupErrCh, startupPortCh := stdoutHandler(logger)
 	cmd.Stdout = stdoutHandler
@@ -136,6 +140,26 @@ func StartWithOptions(opts *Options) (*Server, error) {
 	}
 
 	logger.Debugf("mongod started up and reported a port number after %s", time.Since(startupTime).String())
+
+	// ---------- START OF REPLICA CODE ----------
+	if opts.ShouldUseReplica {
+		mongoCommand := fmt.Sprintf("mongo --port %d --retryWrites --eval \"rs.initiate()\"", opts.Port)
+		//nolint:gosec
+		cmd2 := exec.Command("bash", "-c", mongoCommand)
+		cmd2.Stdout = stdoutHandler
+		cmd2.Stderr = stderrHandler(logger)
+
+		// Initiate Replica
+		err2 := cmd2.Run()
+		if err2 != nil {
+			logger.Warnf("ERROR INITIAING REPLICA: %v", err2)
+
+			return nil, err
+		}
+
+		logger.Debugf("Started mongo replica")
+	}
+	// ---------- END OF REPLICA CODE ----------
 
 	// Return a Memongo server
 	return &Server{

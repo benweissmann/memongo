@@ -57,6 +57,26 @@ func TestSomething(t *testing.T) {
 }
 ```
 
+Spin up a replica set server:
+
+```go
+var mongoServer memongo.Server;
+
+func TestMain(m *testing.M) {
+  mongoServer, err = memongo.StartWitOptions(&memongo.Options{MongoVersion: "4.2.1", ShouldUseReplica: true})
+  if (err != nil) {
+    log.Fatal(err)
+  }
+  defer mongoServer.Stop()
+
+  os.Exit(m.Run())
+}
+
+func TestSomething(t *testing.T) {
+  connectAndDoStuff(mongoServer.URI(), memongo.RandomDatabase())
+}
+```
+
 # How it works
 
 Behind the scenes, when you run `Start()`, a few things are happening:
