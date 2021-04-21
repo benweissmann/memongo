@@ -1,4 +1,6 @@
-module github.com/benweissmann/memongo
+module github.com/sbansal7/memongo
+
+go 1.15
 
 require (
 	github.com/acobaugh/osrelease v0.0.0-20181218015638-a93a0a55a249
