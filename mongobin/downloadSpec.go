@@ -34,6 +34,7 @@ type DownloadSpec struct {
 	// - ubuntu1804
 	// - ubuntu1604
 	// - ubuntu1404
+	// - debian10
 	// - debian92
 	// - debian81
 	// - suse12
@@ -216,6 +217,9 @@ func osNameFromOsRelease(osRelease map[string]string, mongoVersion []int) string
 			return "rhel70"
 		}
 	case "debian":
+		if majorVersion >= 10 && versionGTE(mongoVersion, []int{4, 2, 1}) {
+			return "debian10"
+		}
 		if majorVersion >= 9 && versionGTE(mongoVersion, []int{3, 6, 5}) {
 			return "debian92"
 		}
