@@ -160,6 +160,53 @@ func TestMakeDownloadSpec(t *testing.T) {
 				OSName:         "rhel62",
 			},
 		},
+		"Debian buster": {
+			etcFolder: "debianbuster",
+
+			expectedSpec: &DownloadSpec{
+				Version:        testMongoVersion,
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "debian92",
+			},
+		},
+		"Debian buster new mongo": {
+			mongoVersion: "4.2.1",
+			etcFolder:    "debianbuster",
+
+			expectedSpec: &DownloadSpec{
+				Version:        "4.2.1",
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "debian10",
+			},
+		},
+		"Debian buster older mongo": {
+			mongoVersion: "3.6.4",
+			etcFolder:    "debianbuster",
+
+			expectedSpec: &DownloadSpec{
+				Version:        "3.6.4",
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "debian81",
+			},
+		},
+		"Debian buster much older mongo": {
+			mongoVersion: "3.2.7",
+			etcFolder:    "debianbuster",
+
+			expectedSpec: &DownloadSpec{
+				Version:        "3.2.7",
+				Platform:       "linux",
+				SSLBuildNeeded: false,
+				Arch:           "x86_64",
+				OSName:         "",
+			},
+		},
 		"Debian stretch": {
 			etcFolder: "debianstretch",
 

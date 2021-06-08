@@ -106,6 +106,17 @@ func TestGetDownloadURL(t *testing.T) {
 			mongoVersions: mongoVersionsToTest,
 			expectedURL:   "https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-rhel62-VERSION.tgz",
 		},
+		"Debian buster": {
+			spec: &DownloadSpec{
+				Platform: "linux",
+				Arch:     "x86_64",
+				OSName:   "debian10",
+			},
+			mongoVersions: []string{
+				"4.2.1",
+			},
+			expectedURL: "https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-debian10-VERSION.tgz",
+		},
 		"Debian stretch": {
 			spec: &DownloadSpec{
 				Platform: "linux",
