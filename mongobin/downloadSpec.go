@@ -199,15 +199,7 @@ func osNameFromOsRelease(osRelease map[string]string, mongoVersion []int) string
 
 	switch id {
 	case "ubuntu":
-		if majorVersion >= 18 && versionGTE(mongoVersion, []int{4, 0, 1}) {
-			return "ubuntu1804"
-		}
-		if majorVersion >= 16 && versionGTE(mongoVersion, []int{3, 2, 7}) {
-			return "ubuntu1604"
-		}
-		if majorVersion >= 14 {
-			return "ubuntu1404"
-		}
+		return osNameFromUbuntuRelease(majorVersion, mongoVersion)
 	case "sles":
 		if majorVersion >= 12 {
 			return "suse12"
@@ -217,25 +209,46 @@ func osNameFromOsRelease(osRelease map[string]string, mongoVersion []int) string
 			return "rhel70"
 		}
 	case "debian":
-		if majorVersion >= 10 && versionGTE(mongoVersion, []int{4, 2, 1}) {
-			return "debian10"
-		}
-		if majorVersion >= 9 && versionGTE(mongoVersion, []int{3, 6, 5}) {
-			return "debian92"
-		}
-		if majorVersion >= 8 && versionGTE(mongoVersion, []int{3, 2, 8}) {
-			return "debian81"
-		}
+		return osNameFromDebianRelease(majorVersion, mongoVersion)
 	case "amzn":
-		if majorVersion == 2 && versionGTE(mongoVersion, []int{4, 0, 0}) {
-			return "amazon2"
-		}
-
-		// Version before 2 has the release date, not a real version number
-		return "amazon"
+		return osNameFromAmznRelease(majorVersion, mongoVersion)
 	}
 
 	return ""
+}
+func osNameFromUbuntuRelease(majorVersion int, mongoVersion []int) string {
+	if majorVersion >= 18 && versionGTE(mongoVersion, []int{4, 0, 1}) {
+		return "ubuntu1804"
+	}
+	if majorVersion >= 16 && versionGTE(mongoVersion, []int{3, 2, 7}) {
+		return "ubuntu1604"
+	}
+	if majorVersion >= 14 {
+		return "ubuntu1404"
+	}
+	return ""
+}
+
+func osNameFromDebianRelease(majorVersion int, mongoVersion []int) string {
+	if majorVersion >= 10 && versionGTE(mongoVersion, []int{4, 2, 1}) {
+		return "debian10"
+	}
+	if majorVersion >= 9 && versionGTE(mongoVersion, []int{3, 6, 5}) {
+		return "debian92"
+	}
+	if majorVersion >= 8 && versionGTE(mongoVersion, []int{3, 2, 8}) {
+		return "debian81"
+	}
+	return ""
+}
+
+func osNameFromAmznRelease(majorVersion int, mongoVersion []int) string {
+	if majorVersion == 2 && versionGTE(mongoVersion, []int{4, 0, 0}) {
+		return "amazon2"
+	}
+
+	// Version before 2 has the release date, not a real version number
+	return "amazon"
 }
 
 func osNameFromRedhatRelease(redhatRelease string) string {
