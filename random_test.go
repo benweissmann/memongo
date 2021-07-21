@@ -1,17 +1,33 @@
-package memongo
+// Copyright 2021 Tryvium Travels LTD
+// Copyright 2019-2020 Ben Weissmann
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package memongo_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/tryvium-travels/memongo"
 )
 
 func TestRandomDatabase(t *testing.T) {
-	s := RandomDatabase()
+	s := memongo.RandomDatabase()
 
-	assert.Len(t, s, DBNameLen)
+	assert.Len(t, s, memongo.DBNameLen)
 
-	dbNameRunes := []rune(DBNameChars)
+	dbNameRunes := []rune(memongo.DBNameChars)
 	for _, c := range s {
 		assert.Contains(t, dbNameRunes, c)
 	}
@@ -21,7 +37,7 @@ func TestRandomDatabaseEntropy(t *testing.T) {
 	seen := map[string]bool{}
 
 	for i := 0; i < 1000; i++ {
-		s := RandomDatabase()
+		s := memongo.RandomDatabase()
 		assert.False(t, seen[s])
 
 		seen[s] = true

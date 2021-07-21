@@ -1,3 +1,18 @@
+// Copyright 2021 Tryvium Travels LTD
+// Copyright 2019-2020 Ben Weissmann
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package mongobin
 
 import (
@@ -10,10 +25,10 @@ import (
 )
 
 // We define these as package vars so we can override it in tests
-var etcOsRelease = "/etc/os-release"
-var etcRedhatRelease = "/etc/redhat-release"
-var goOS = runtime.GOOS
-var goArch = runtime.GOARCH
+var EtcOsRelease = "/etc/os-release"
+var EtcRedhatRelease = "/etc/redhat-release"
+var GoOS = runtime.GOOS
+var GoArch = runtime.GOARCH
 
 // DownloadSpec specifies what copy of MongoDB to download
 type DownloadSpec struct {
@@ -127,39 +142,39 @@ func parseVersion(version string) ([]int, error) {
 }
 
 func detectPlatform() (string, error) {
-	switch goOS {
+	switch GoOS {
 	case "darwin":
 		return "osx", nil
 	case "linux":
 		return "linux", nil
 	default:
-		return "", &UnsupportedSystemError{msg: "your platform, " + goOS + ", is not supported"}
+		return "", &UnsupportedSystemError{msg: "your platform, " + GoOS + ", is not supported"}
 	}
 }
 
 func detectArch() (string, error) {
-	switch goArch {
+	switch GoArch {
 	case "amd64":
 		return "x86_64", nil
 	default:
-		return "", &UnsupportedSystemError{msg: "your architecture, " + goArch + ", is not supported"}
+		return "", &UnsupportedSystemError{msg: "your architecture, " + GoArch + ", is not supported"}
 	}
 }
 
 func detectOSName(mongoVersion []int) string {
-	if goOS != "linux" {
+	if GoOS != "linux" {
 		// Not on Linux
 		return ""
 	}
 
-	osRelease, osReleaseErr := osrelease.ReadFile(etcOsRelease)
+	osRelease, osReleaseErr := osrelease.ReadFile(EtcOsRelease)
 	if osReleaseErr == nil {
 		return osNameFromOsRelease(osRelease, mongoVersion)
 	}
 
 	// We control etcRedhatRelease
 	//nolint:gosec
-	redhatRelease, redhatReleaseErr := ioutil.ReadFile(etcRedhatRelease)
+	redhatRelease, redhatReleaseErr := ioutil.ReadFile(EtcRedhatRelease)
 	if redhatReleaseErr == nil {
 		return osNameFromRedhatRelease(string(redhatRelease))
 	}

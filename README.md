@@ -1,6 +1,6 @@
 # memongo
 
-[![CI](https://github.com/benweissmann/memongo/workflows/Go/badge.svg)](https://github.com/benweissmann/memongo/actions?workflow=Go) [![GoDoc](https://godoc.org/github.com/benweissmann/memongo?status.svg)](https://godoc.org/github.com/benweissmann/memongo) [![Go Report Card](https://goreportcard.com/badge/github.com/benweissmann/memongo)](https://goreportcard.com/report/github.com/benweissmann/memongo)
+[![CI](https://github.com/tryvium-travels/memongo/workflows/Go/badge.svg)](https://github.com/tryvium-travels/memongo/actions?workflow=Go) [![GoDoc](https://godoc.org/github.com/tryvium-travels/memongo?status.svg)](https://godoc.org/github.com/tryvium-travels/memongo) [![Go Report Card](https://goreportcard.com/badge/github.com/tryvium-travels/memongo)](https://goreportcard.com/report/github.com/tryvium-travels/memongo)
 
 `memongo` is a Go package that spins up a real MongoDB server, backed by in-memory
 storage, for use in testing and mocking during development. It's based on
@@ -83,7 +83,7 @@ Behind the scenes, when you run `Start()`, a few things are happening:
 
 The behavior of `memongo` can be controlled by using
 `memongo.StartWithOptions` instead of `memongo.Start`. See
-[the godoc](https://godoc.org/github.com/benweissmann/memongo) for all the options. Many options can also be set via environment variable.
+[the godoc](https://godoc.org/github.com/tryvium-travels/memongo) for all the options. Many options can also be set via environment variable.
 
 A few common use-cases are covered here:
 

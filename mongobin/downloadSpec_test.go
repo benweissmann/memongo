@@ -1,10 +1,26 @@
-package mongobin
+// Copyright 2021 Tryvium Travels LTD
+// Copyright 2019-2020 Ben Weissmann
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package mongobin_test
 
 import (
 	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/tryvium-travels/memongo/mongobin"
 )
 
 const testMongoVersion = "4.0.5"
@@ -16,13 +32,13 @@ func TestMakeDownloadSpec(t *testing.T) {
 		goOs         string
 		goArch       string
 
-		expectedSpec  *DownloadSpec
+		expectedSpec  *mongobin.DownloadSpec
 		expectedError string
 	}{
 		"mac and older mongo": {
 			goOs: "darwin",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        testMongoVersion,
 				Platform:       "osx",
 				SSLBuildNeeded: true,
@@ -34,7 +50,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 			goOs:         "darwin",
 			mongoVersion: "4.2.1",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        "4.2.1",
 				Platform:       "osx",
 				SSLBuildNeeded: false,
@@ -50,7 +66,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 		"ubuntu 18.10": {
 			etcFolder: "ubuntu1810",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        testMongoVersion,
 				Platform:       "linux",
 				SSLBuildNeeded: false,
@@ -61,7 +77,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 		"ubuntu 18.04": {
 			etcFolder: "ubuntu1804",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        testMongoVersion,
 				Platform:       "linux",
 				SSLBuildNeeded: false,
@@ -73,7 +89,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 			mongoVersion: "4.0.0",
 			etcFolder:    "ubuntu1804",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        "4.0.0",
 				Platform:       "linux",
 				SSLBuildNeeded: false,
@@ -85,7 +101,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 			mongoVersion: "3.2.6",
 			etcFolder:    "ubuntu1804",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        "3.2.6",
 				Platform:       "linux",
 				SSLBuildNeeded: false,
@@ -96,7 +112,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 		"ubuntu 16.04": {
 			etcFolder: "ubuntu1604",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        testMongoVersion,
 				Platform:       "linux",
 				SSLBuildNeeded: false,
@@ -108,7 +124,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 			mongoVersion: "3.2.6",
 			etcFolder:    "ubuntu1604",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        "3.2.6",
 				Platform:       "linux",
 				SSLBuildNeeded: false,
@@ -119,7 +135,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 		"ubuntu 14.04": {
 			etcFolder: "ubuntu1404",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        testMongoVersion,
 				Platform:       "linux",
 				SSLBuildNeeded: false,
@@ -130,7 +146,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 		"SUSE 12": {
 			etcFolder: "suse12",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        testMongoVersion,
 				Platform:       "linux",
 				SSLBuildNeeded: false,
@@ -141,7 +157,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 		"RHEL 7": {
 			etcFolder: "rhel7",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        testMongoVersion,
 				Platform:       "linux",
 				SSLBuildNeeded: false,
@@ -152,7 +168,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 		"RHEL 6": {
 			etcFolder: "rhel6",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        testMongoVersion,
 				Platform:       "linux",
 				SSLBuildNeeded: false,
@@ -163,7 +179,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 		"Debian stretch": {
 			etcFolder: "debianstretch",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        testMongoVersion,
 				Platform:       "linux",
 				SSLBuildNeeded: false,
@@ -175,7 +191,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 			mongoVersion: "3.6.4",
 			etcFolder:    "debianstretch",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        "3.6.4",
 				Platform:       "linux",
 				SSLBuildNeeded: false,
@@ -187,7 +203,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 			mongoVersion: "3.2.7",
 			etcFolder:    "debianstretch",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        "3.2.7",
 				Platform:       "linux",
 				SSLBuildNeeded: false,
@@ -198,7 +214,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 		"Debian jessie": {
 			etcFolder: "debianjessie",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        testMongoVersion,
 				Platform:       "linux",
 				SSLBuildNeeded: false,
@@ -210,7 +226,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 			mongoVersion: "3.2.7",
 			etcFolder:    "debianjessie",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        "3.2.7",
 				Platform:       "linux",
 				SSLBuildNeeded: false,
@@ -221,7 +237,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 		"Amazon Linux": {
 			etcFolder: "amazon",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        testMongoVersion,
 				Platform:       "linux",
 				SSLBuildNeeded: false,
@@ -232,7 +248,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 		"Amazon Linux 2": {
 			etcFolder: "amazon2",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        testMongoVersion,
 				Platform:       "linux",
 				SSLBuildNeeded: false,
@@ -244,7 +260,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 			mongoVersion: "3.6.5",
 			etcFolder:    "amazon2",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        "3.6.5",
 				Platform:       "linux",
 				SSLBuildNeeded: false,
@@ -255,7 +271,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 		"Old Debian": {
 			etcFolder: "old-debian",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        testMongoVersion,
 				Platform:       "linux",
 				SSLBuildNeeded: false,
@@ -266,7 +282,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 		"Old RedHat": {
 			etcFolder: "old-redhat",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        testMongoVersion,
 				Platform:       "linux",
 				SSLBuildNeeded: false,
@@ -277,7 +293,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 		"Old SUSE": {
 			etcFolder: "old-sles",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        testMongoVersion,
 				Platform:       "linux",
 				SSLBuildNeeded: false,
@@ -288,7 +304,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 		"Old Ubuntu": {
 			etcFolder: "old-ubuntu",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        testMongoVersion,
 				Platform:       "linux",
 				SSLBuildNeeded: false,
@@ -299,7 +315,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 		"Other Linux": {
 			etcFolder: "other-linux",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        testMongoVersion,
 				Platform:       "linux",
 				SSLBuildNeeded: false,
@@ -310,7 +326,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 		"Empty /etc": {
 			etcFolder: "empty-etc",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        testMongoVersion,
 				Platform:       "linux",
 				SSLBuildNeeded: false,
@@ -321,7 +337,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 		"Malformed ubuntu": {
 			etcFolder: "ubuntu-malformed",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        testMongoVersion,
 				Platform:       "linux",
 				SSLBuildNeeded: false,
@@ -343,7 +359,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 			etcFolder:    "ubuntu1804",
 			mongoVersion: "4.2.3",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        "4.2.3",
 				Platform:       "linux",
 				SSLBuildNeeded: false,
@@ -354,7 +370,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 		"MongoDB 3.6": {
 			mongoVersion: "3.6.1",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        "3.6.1",
 				Platform:       "linux",
 				SSLBuildNeeded: false,
@@ -365,7 +381,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 		"MongoDB 3.4": {
 			mongoVersion: "3.4.0",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        "3.4.0",
 				Platform:       "linux",
 				SSLBuildNeeded: false,
@@ -376,7 +392,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 		"MongoDB 3.2": {
 			mongoVersion: "3.2.0",
 
-			expectedSpec: &DownloadSpec{
+			expectedSpec: &mongobin.DownloadSpec{
 				Version:        "3.2.0",
 				Platform:       "linux",
 				SSLBuildNeeded: false,
@@ -424,30 +440,30 @@ func TestMakeDownloadSpec(t *testing.T) {
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
 			if test.etcFolder == "" {
-				etcOsRelease = "./testdata/etc/empty-etc/os-release"
-				etcRedhatRelease = "./testdata/etc/empty-etc/redhat-release"
+				mongobin.EtcOsRelease = "./testdata/etc/empty-etc/os-release"
+				mongobin.EtcRedhatRelease = "./testdata/etc/empty-etc/redhat-release"
 			} else {
-				etcOsRelease = "./testdata/etc/" + test.etcFolder + "/os-release"
-				etcRedhatRelease = "./testdata/etc/" + test.etcFolder + "/redhat-release"
+				mongobin.EtcOsRelease = "./testdata/etc/" + test.etcFolder + "/os-release"
+				mongobin.EtcRedhatRelease = "./testdata/etc/" + test.etcFolder + "/redhat-release"
 			}
 
 			if test.goArch == "" {
-				goArch = "amd64"
+				mongobin.GoArch = "amd64"
 			} else {
-				goArch = test.goArch
+				mongobin.GoArch = test.goArch
 			}
 
 			if test.goOs == "" {
-				goOS = "linux"
+				mongobin.GoOS = "linux"
 			} else {
-				goOS = test.goOs
+				mongobin.GoOS = test.goOs
 			}
 
 			defer func() {
-				etcOsRelease = "/etc/os-release"
-				etcRedhatRelease = "/etc/redhat-release"
-				goOS = runtime.GOOS
-				goArch = runtime.GOARCH
+				mongobin.EtcOsRelease = "/etc/os-release"
+				mongobin.EtcRedhatRelease = "/etc/redhat-release"
+				mongobin.GoOS = runtime.GOOS
+				mongobin.GoArch = runtime.GOARCH
 			}()
 
 			mongoVersion := test.mongoVersion
@@ -455,7 +471,7 @@ func TestMakeDownloadSpec(t *testing.T) {
 				mongoVersion = testMongoVersion
 			}
 
-			result, err := MakeDownloadSpec(mongoVersion)
+			result, err := mongobin.MakeDownloadSpec(mongoVersion)
 
 			if test.expectedError != "" {
 				require.Error(t, err)
