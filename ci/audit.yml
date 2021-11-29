@@ -1,0 +1,15 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: onsdigital/dp-concourse-tools-nancy
+    tag: latest
+
+inputs:
+  - name: dp-mongodb-in-memory
+    path: dp-mongodb-in-memory
+
+run:
+  path: dp-mongodb-in-memory/ci/scripts/audit.sh

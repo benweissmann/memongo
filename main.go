@@ -1,150 +1,118 @@
-package memongo
+package mim
 
 import (
 	"bufio"
+	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"regexp"
-	"strconv"
-	"strings"
 	"time"
 
-	"github.com/benweissmann/memongo/memongolog"
-	"github.com/benweissmann/memongo/monitor"
+	"github.com/ONSdigital/dp-mongodb-in-memory/download"
+	"github.com/ONSdigital/dp-mongodb-in-memory/monitor"
+	"github.com/ONSdigital/log.go/v2/log"
 )
 
-// Server represents a running MongoDB server
+// max time allowed for mongo to start
+const timeout = 5 * time.Second
+
+// Server represents a running MongoDB server.
 type Server struct {
 	cmd        *exec.Cmd
 	watcherCmd *exec.Cmd
 	dbDir      string
-	logger     *memongolog.Logger
 	port       int
 }
 
-// Start runs a MongoDB server at a given MongoDB version using default options
-// and returns the Server.
-func Start(version string) (*Server, error) {
-	return StartWithOptions(&Options{
-		MongoVersion: version,
-	})
+func init() {
+	log.Namespace = "dp-mongodb-in-memory"
 }
 
-// StartWithOptions is like Start(), but accepts options.
-func StartWithOptions(opts *Options) (*Server, error) {
-	err := opts.fillDefaults()
+// Start runs a MongoDB server at a given version using a random free port
+// and returns the Server.
+func Start(version string) (*Server, error) {
+	server := new(Server)
+
+	binPath, err := getOrDownloadBinPath(version)
 	if err != nil {
+		log.Fatal(context.Background(), "Could not find mongodb", err)
 		return nil, err
 	}
-
-	logger := opts.getLogger()
-
-	logger.Infof("Starting MongoDB with options %#v", opts)
-
-	binPath, err := opts.getOrDownloadBinPath()
-	if err != nil {
-		return nil, err
-	}
-
-	logger.Debugf("Using binary %s", binPath)
 
 	// Create a db dir. Even the ephemeralForTest engine needs a dbpath.
-	dbDir, err := ioutil.TempDir("", "")
+	server.dbDir, err = ioutil.TempDir("", "")
 	if err != nil {
+		log.Fatal(context.Background(), "Error creating data directory", err)
 		return nil, err
 	}
 
-	// Construct the command and attach stdout/stderr handlers
+	log.Info(context.Background(), "Starting mongod server", log.Data{"binPath": binPath, "dbDir": server.dbDir})
+	// By specifying port 0, mongo will find and use an available port
+	server.cmd = exec.Command(binPath, "--storageEngine", "ephemeralForTest", "--dbpath", server.dbDir, "--port", "0")
 
-	//  Safe to pass binPath and dbDir
-	//nolint:gosec
-	cmd := exec.Command(binPath, "--storageEngine", "ephemeralForTest", "--dbpath", dbDir, "--port", strconv.Itoa(opts.Port))
-
-	stdoutHandler, startupErrCh, startupPortCh := stdoutHandler(logger)
-	cmd.Stdout = stdoutHandler
-	cmd.Stderr = stderrHandler(logger)
-
-	logger.Debugf("Starting mongod")
+	startupErrCh := make(chan error)
+	startupPortCh := make(chan int)
+	stdHandler := stdHandler(startupPortCh, startupErrCh)
+	server.cmd.Stdout = stdHandler
+	server.cmd.Stderr = stdHandler
 
 	// Run the server
-	err = cmd.Start()
+	err = server.cmd.Start()
 	if err != nil {
-		remErr := os.RemoveAll(dbDir)
-		if remErr != nil {
-			logger.Warnf("error removing data directory: %s", remErr)
-		}
-
+		log.Fatal(context.Background(), "Could not start mongodb", err)
+		server.Stop()
 		return nil, err
 	}
 
-	logger.Debugf("Started mongod; starting watcher")
-
-	// Start a watcher: the watcher is a subprocess that ensure if this process
+	log.Info(context.Background(), "Starting watcher")
+	// Start a watcher: the watcher is a subprocess that ensures if this process
 	// dies, the mongo server will be killed (and not reparented under init)
-	watcherCmd, err := monitor.RunMonitor(os.Getpid(), cmd.Process.Pid)
+	server.watcherCmd, err = monitor.Run(os.Getpid(), server.cmd.Process.Pid)
 	if err != nil {
-		killErr := cmd.Process.Kill()
-		if killErr != nil {
-			logger.Warnf("error stopping mongo process: %s", killErr)
-		}
-
-		remErr := os.RemoveAll(dbDir)
-		if remErr != nil {
-			logger.Warnf("error removing data directory: %s", remErr)
-		}
-
+		log.Error(context.Background(), "Could not start watcher", err)
+		server.Stop()
 		return nil, err
 	}
 
-	logger.Debugf("Started watcher; waiting for mongod to report port number")
-	startupTime := time.Now()
-
-	// Wait for the stdout handler to report the server's port number (or a
-	// startup error)
-	var port int
 	select {
-	case p := <-startupPortCh:
-		port = p
+	case server.port = <-startupPortCh:
 	case err := <-startupErrCh:
-		killErr := cmd.Process.Kill()
-		if killErr != nil {
-			logger.Warnf("error stopping mongo process: %s", killErr)
-		}
-
-		remErr := os.RemoveAll(dbDir)
-		if remErr != nil {
-			logger.Warnf("error removing data directory: %s", remErr)
-		}
-
+		server.Stop()
 		return nil, err
-	case <-time.After(opts.StartupTimeout):
-		killErr := cmd.Process.Kill()
-		if killErr != nil {
-			logger.Warnf("error stopping mongo process: %s", killErr)
-		}
-
-		remErr := os.RemoveAll(dbDir)
-		if remErr != nil {
-			logger.Warnf("error removing data directory: %s", remErr)
-		}
-
+	case <-time.After(timeout):
+		server.Stop()
 		return nil, errors.New("timed out waiting for mongod to start")
 	}
 
-	logger.Debugf("mongod started up and reported a port number after %s", time.Since(startupTime).String())
+	log.Info(context.Background(), fmt.Sprintf("mongod started up and reported port number %d", server.port))
 
-	// Return a Memongo server
-	return &Server{
-		cmd:        cmd,
-		watcherCmd: watcherCmd,
-		dbDir:      dbDir,
-		logger:     logger,
-		port:       port,
-	}, nil
+	return server, nil
+}
+
+// Stop kills the mongo server.
+func (s *Server) Stop() {
+	if s.cmd != nil {
+		err := s.cmd.Process.Kill()
+		if err != nil {
+			log.Error(context.Background(), "Error stopping mongod process", err, log.Data{"pid": s.cmd.Process.Pid})
+		}
+	}
+
+	if s.watcherCmd != nil {
+		err := s.watcherCmd.Process.Kill()
+		if err != nil {
+			log.Error(context.Background(), "error stopping watcher process", err, log.Data{"pid": s.watcherCmd.Process.Pid})
+		}
+	}
+
+	err := os.RemoveAll(s.dbDir)
+	if err != nil {
+		log.Error(context.Background(), "Error removing data directory", err, log.Data{"dir": s.dbDir})
+	}
 }
 
 // Port returns the port the server is listening on.
@@ -157,119 +125,54 @@ func (s *Server) URI() string {
 	return fmt.Sprintf("mongodb://localhost:%d", s.port)
 }
 
-// URIWithRandomDB returns a mongodb:// URI to connect to, with
-// a random database name (e.g. mongodb://localhost:1234/somerandomname)
-func (s *Server) URIWithRandomDB() string {
-	return fmt.Sprintf("mongodb://localhost:%d/%s", s.port, RandomDatabase())
+func getOrDownloadBinPath(version string) (string, error) {
+	config, err := download.NewConfig(version)
+	if err != nil {
+		log.Error(context.Background(), "Failed to create config", err)
+		return "", err
+	}
+
+	if err := download.GetMongoDB(*config); err != nil {
+		return "", err
+	}
+	return config.MongoPath(), nil
 }
 
-// Stop kills the mongo server
-func (s *Server) Stop() {
-	err := s.cmd.Process.Kill()
-	if err != nil {
-		s.logger.Warnf("error stopping mongod process: %s", err)
-		return
-	}
-
-	err = s.watcherCmd.Process.Kill()
-	if err != nil {
-		s.logger.Warnf("error stopping watcher process: %s", err)
-		return
-	}
-
-	err = os.RemoveAll(s.dbDir)
-	if err != nil {
-		s.logger.Warnf("error removing data directory: %s", err)
-		return
-	}
-}
-
-// Cribbed from https://github.com/nodkz/mongodb-memory-server/blob/master/packages/mongodb-memory-server-core/src/util/MongoInstance.ts#L206
-var reReady = regexp.MustCompile(`waiting for connections on port (\d+)`)
-var reAlreadyInUse = regexp.MustCompile("addr already in use")
-var reAlreadyRunning = regexp.MustCompile("mongod already running")
-var rePermissionDenied = regexp.MustCompile("mongod permission denied")
-var reDataDirectoryNotFound = regexp.MustCompile("data directory .*? not found")
-var reShuttingDown = regexp.MustCompile("shutting down with code")
-
-// The stdout handler relays lines from mongod's stout to our logger, and also
-// watches during startup for error or success messages.
-//
-// It returns two channels: an error channel and a port channel. Only one
-// message will be sent to one of these two channels. A port number will
-// be sent to the port channel if the server start up correctly, and an
-// error will be send to the error channel if the server does not start up
-// correctly.
-func stdoutHandler(log *memongolog.Logger) (io.Writer, <-chan error, <-chan int) {
-	errChan := make(chan error)
-	portChan := make(chan int)
-
+// stdHandler handler relays messages from stdout/stderr to our logger.
+// It accepts 2 channels:
+// errCh will receive any error logged,
+// okCh will receive the port number if mongodb started successfully
+func stdHandler(okCh chan<- int, errCh chan<- error) io.Writer {
 	reader, writer := io.Pipe()
 
 	go func() {
 		scanner := bufio.NewScanner(reader)
-		haveSentMessage := false
 
 		for scanner.Scan() {
-			line := scanner.Text()
-
-			log.Debugf("[Mongod stdout] %s", line)
-
-			if !haveSentMessage {
-				downcaseLine := strings.ToLower(line)
-
-				if match := reReady.FindStringSubmatch(downcaseLine); match != nil {
-					port, err := strconv.Atoi(match[1])
-					if err != nil {
-						errChan <- errors.New("Could not parse port from mongod log line: " + downcaseLine)
-					} else {
-						portChan <- port
-					}
-					haveSentMessage = true
-				} else if reAlreadyInUse.MatchString(downcaseLine) {
-					errChan <- errors.New("Mongod startup failed, address in use")
-					haveSentMessage = true
-				} else if reAlreadyRunning.MatchString(downcaseLine) {
-					errChan <- errors.New("Mongod startup failed, already running")
-					haveSentMessage = true
-				} else if rePermissionDenied.MatchString(downcaseLine) {
-					errChan <- errors.New("mongod startup failed, permission denied")
-					haveSentMessage = true
-				} else if reDataDirectoryNotFound.MatchString(downcaseLine) {
-					errChan <- errors.New("Mongod startup failed, data directory not found")
-					haveSentMessage = true
-				} else if reShuttingDown.MatchString(downcaseLine) {
-					errChan <- errors.New("Mongod startup failed, server shut down")
-					haveSentMessage = true
+			text := scanner.Text()
+			var logMessage log.Data
+			err := json.Unmarshal([]byte(text), &logMessage)
+			if err != nil {
+				// Output the message as is if not json
+				log.Info(context.Background(), fmt.Sprintf("[mongod] %s", text))
+			} else {
+				message := logMessage["msg"]
+				severity := logMessage["s"]
+				if severity == "E" || severity == "F" {
+					// error or fatal
+					errCh <- fmt.Errorf("Mongod startup failed: %s", message)
+				} else if severity == "I" && message == "Waiting for connections" {
+					// Mongo running successfully: find port
+					attr := logMessage["attr"].(map[string]interface{})
+					okCh <- int(attr["port"].(float64))
 				}
+
+				log.Info(context.Background(), fmt.Sprintf("[mongod] %s", message), logMessage)
 			}
 		}
 
 		if err := scanner.Err(); err != nil {
-			log.Warnf("reading mongod stdin failed: %s", err)
-		}
-
-		if !haveSentMessage {
-			errChan <- errors.New("Mongod exited before startup completed")
-		}
-	}()
-
-	return writer, errChan, portChan
-}
-
-// The stderr handler just relays messages from stderr to our logger
-func stderrHandler(log *memongolog.Logger) io.Writer {
-	reader, writer := io.Pipe()
-
-	go func() {
-		scanner := bufio.NewScanner(reader)
-
-		for scanner.Scan() {
-			log.Debugf("[Mongod stderr] %s", scanner.Text())
-		}
-
-		if err := scanner.Err(); err != nil {
-			log.Warnf("reading mongod stdin failed: %s", err)
+			log.Error(context.Background(), "reading mongod stdout/stderr failed: %s", err)
 		}
 	}()
 
