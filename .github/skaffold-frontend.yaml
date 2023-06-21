@@ -1,0 +1,34 @@
+apiVersion: skaffold/v4beta1
+kind: Config
+metadata:
+  name: APP_NAME
+build:
+  platforms: ["linux/amd64"]
+  tagPolicy:
+    gitCommit:
+      variant: CommitSha
+      prefix: skaffold-preview-PR_NUMBER
+  artifacts:
+  - image: APP_NAME
+    docker:
+      dockerfile: Dockerfile.APP_SHORT_NAME
+      buildArgs:
+        env: stg
+        APPLICATION_NAME: APP_SHORT_NAME
+        github_token: GH_TOKEN
+deploy:
+  helm:
+    releases:
+    - name: "APP_NAME-prPR_NUMBER"
+      namespace: apps
+      chartPath: helm-apps/ephemeral-app-template/stg
+      valuesFiles:
+        - cloud/stg-APP_SHORT_NAME-values.yaml
+      setValueTemplates:
+        image: "{{.IMAGE_FULLY_QUALIFIED_UNDERSCORE_APP_NAME}}"
+      setValues:
+        appName: "APP_NAME-prPR_NUMBER"
+
+    flags:
+      upgrade:
+        - --install

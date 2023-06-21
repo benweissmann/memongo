@@ -1,0 +1,36 @@
+apiVersion: skaffold/v4beta1
+kind: Config
+metadata:
+  name: REPOSITORY_NAME
+build:
+  platforms: ["linux/amd64"]
+  tagPolicy:
+    gitCommit:
+      variant: CommitSha
+      prefix: skaffold-preview-PR_NUMBER
+  artifacts:
+  - image: REPOSITORY_NAME
+    docker:
+      dockerfile: Dockerfile
+      buildArgs:
+        env: stg
+        APPLICATION_NAME: REPOSITORY_NAME
+        github_token: GH_TOKEN
+        github_user: strike-cloud
+deploy:
+  helm:
+    releases:
+    - name: "REPOSITORY_NAME-prPR_NUMBER"
+      namespace: apps
+      repo: https://charts.santieich.com
+      chartPath: helm-apps/ephemeral-app-template/stg
+      valuesFiles:
+        - cloud/stg-values.yaml
+      setValueTemplates:
+        image: "{{.IMAGE_FULLY_QUALIFIED_REPO_NAME}}"
+      setValues:
+        appName: "REPOSITORY_NAME-prPR_NUMBER"
+
+    flags:
+      upgrade:
+        - --install

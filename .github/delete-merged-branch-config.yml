@@ -1,0 +1,4 @@
+exclude: 
+  - staging
+  - master
+delete_closed_pr: false
