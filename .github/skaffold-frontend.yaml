@@ -23,11 +23,12 @@ deploy:
       namespace: apps
       chartPath: helm-apps/ephemeral-app-template/stg
       valuesFiles:
-        - cloud/stg-APP_SHORT_NAME-values.yaml
+        - cloud/APP_SHORT_NAME/stg/values.yaml
       setValueTemplates:
         image: "{{.IMAGE_FULLY_QUALIFIED_UNDERSCORE_APP_NAME}}"
       setValues:
         appName: "APP_NAME-prPR_NUMBER"
+        appVersion: skaffold-preview-PR_NUMBER
 
     flags:
       upgrade:
