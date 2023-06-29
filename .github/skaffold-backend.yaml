@@ -25,7 +25,7 @@ deploy:
       repo: https://charts.santieich.com
       chartPath: helm-apps/ephemeral-app-template/stg
       valuesFiles:
-        - cloud/stg-values.yaml
+        - cloud/stg/values.yaml
       setValueTemplates:
         image: "{{.IMAGE_FULLY_QUALIFIED_REPO_NAME}}"
       setValues:
